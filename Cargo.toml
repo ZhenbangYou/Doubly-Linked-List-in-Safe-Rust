@@ -1,5 +1,5 @@
 [package]
-name = "Doubly-Linked-List-in-Safe-Rust"
+name = "doubly_linked_list_in_safe_rust"
 version = "0.1.0"
 edition = "2021"
 
