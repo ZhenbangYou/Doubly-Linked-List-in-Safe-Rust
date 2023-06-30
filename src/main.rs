@@ -1,14 +1,64 @@
 use list::*;
 
-fn main() {
-    let mut ls = List::new();
-    ls.insert_front(&1);
-    ls.insert_front(&3);
-    ls.insert_front(&-121);
-    println!("{}", ls.find(&3));
-    println!("{}", ls.find(&5));
-    ls.delete(&1);
-    println!("{}", ls.find(&1));
+fn main() {}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use rand::Rng;
+
+    #[test]
+    fn test1() {
+        let mut ls = List::new();
+        ls.insert_front(&1);
+        ls.insert_front(&3);
+        ls.insert_front(&-121);
+        assert_eq!(ls.find(&3), true);
+        assert_eq!(ls.find(&5), false);
+        ls.delete(&1);
+        assert_eq!(ls.find(&1), false);
+    }
+
+    #[test]
+    fn test2() {
+        use std::collections::HashMap;
+
+        let mut ls = List::new();
+        let mut rng = rand::thread_rng();
+        let mut map = HashMap::new();
+        for _ in 0..100 {
+            let is_insert = rng.gen_bool(0.5);
+
+            if is_insert {
+                let r = rng.gen_range(0..100);
+                println!("{r}");
+                ls.insert_front(&r);
+                match map.get_mut(&r) {
+                    Some(v) => *v += 1,
+                    None => {
+                        let _ = map.insert(r, 1);
+                    }
+                }
+            } else {
+                let r = rng.gen_range(0..100);
+                println!("{r}");
+                match map.get_mut(&r) {
+                    Some(v) => {
+                        println!("cnt: {}", *v);
+                        *v -= 1;
+                        if *v == 0 {
+                            map.remove(&r);
+                        }
+                        assert_eq!(ls.find(&r), true);
+                        ls.delete(&r);
+                    }
+                    None => {
+                        assert_eq!(ls.find(&r), false);
+                    }
+                }
+            }
+        }
+    }
 }
 
 mod list {
@@ -21,7 +71,7 @@ mod list {
     }
 
     impl<T: Clone + Eq> ListNode<T> {
-        pub fn new(item: &T) -> ListNode<T> {
+        fn new(item: &T) -> ListNode<T> {
             ListNode {
                 item: item.clone(),
                 prev: None,
@@ -62,7 +112,7 @@ mod list {
         }
         pub fn insert_front(&mut self, val: &T) {
             let node = Rc::new(RefCell::new(ListNode::new(val)));
-            match &mut self.head {
+            match &self.head {
                 Some(old_head) => {
                     let node = node.clone();
                     node.borrow_mut().next = Some(old_head.clone());
@@ -76,7 +126,7 @@ mod list {
         }
         fn delete_internal(&mut self, node: Rc<RefCell<ListNode<T>>>, value: &T) {
             let node = node.clone();
-            let cur: std::cell::Ref<'_, ListNode<T>> = (*node).borrow();
+            let cur = (*node).borrow();
             if &cur.item == value {
                 match &cur.prev {
                     Some(prev) => match &cur.next {
@@ -102,9 +152,7 @@ mod list {
                 }
             } else {
                 match &cur.next {
-                    Some(next) => {
-                        self.delete_internal(next.clone(), value);
-                    }
+                    Some(next) => self.delete_internal(next.clone(), value),
                     None => {}
                 }
             }
