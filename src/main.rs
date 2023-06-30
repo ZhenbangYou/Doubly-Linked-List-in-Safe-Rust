@@ -31,8 +31,9 @@ mod tests {
 
             if is_insert {
                 let r = rng.gen_range(0..100);
-                println!("{r}");
+                println!("insert {r}");
                 ls.insert_front(&r);
+                println!("{:?}",ls.to_vec());
                 match map.get_mut(&r) {
                     Some(v) => *v += 1,
                     None => {
@@ -41,10 +42,10 @@ mod tests {
                 }
             } else {
                 let r = rng.gen_range(0..100);
-                println!("{r}");
+                println!("delete {r}");
                 match map.get_mut(&r) {
                     Some(v) => {
-                        println!("cnt: {}", *v);
+                        println!("{:?}",ls.to_vec());
                         *v -= 1;
                         if *v == 0 {
                             map.remove(&r);
@@ -116,6 +117,7 @@ mod list {
                 Some(old_head) => {
                     let node = node.clone();
                     node.borrow_mut().next = Some(old_head.clone());
+                    (*old_head).borrow_mut().prev = Some(node.clone());
                     self.head = Some(node);
                 }
                 None => {
@@ -162,6 +164,20 @@ mod list {
                 Some(n) => self.delete_internal(n.clone(), value),
                 None => {}
             }
+        }
+    }
+
+    impl<T: Clone + Eq> List<T> {
+        pub fn to_vec(&self) -> Vec<T> {
+            let mut res = vec![];
+            let mut cur = self.head.clone();
+            while let Some(c) = cur.clone() {
+                let c = c.clone();
+                let val = c.borrow().item.clone();
+                res.push(val);
+                cur = c.borrow().next.clone();
+            }
+            res
         }
     }
 }
