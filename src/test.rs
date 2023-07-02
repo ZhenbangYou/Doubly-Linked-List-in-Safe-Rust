@@ -58,4 +58,17 @@ mod tests {
             }
         }
     }
+
+    #[test]
+    fn test_delete_first() {
+        let mut l = List::new();
+
+        l.insert_front(&1);
+        l.insert_front(&2);
+        l.insert_front(&3);
+
+        l.delete(&3);
+
+        assert_eq!(l.to_vec(), vec![2, 1]);
+    }
 }

@@ -24,7 +24,7 @@ mod list {
         }
     }
 
-    struct List<T: Clone + Eq> {
+    pub struct List<T: Clone + Eq> {
         head: Option<Rc<RefCell<ListNode<T>>>>,
         tail: Option<Rc<RefCell<ListNode<T>>>>,
     }
@@ -70,34 +70,24 @@ mod list {
             }
         }
         fn delete_internal(&mut self, node: Rc<RefCell<ListNode<T>>>, value: &T) {
-            let node = node.clone();
-            let cur = (*node).borrow();
+            let cur = node.borrow();
+            let cur_prev = cur.prev.clone();
+            let cur_next = cur.next.clone();
+
             if &cur.item == value {
-                match &cur.prev {
-                    Some(prev) => match &cur.next {
-                        Some(next) => {
-                            prev.borrow_mut().next = Some(next.clone());
-                            next.borrow_mut().prev = Some(prev.clone());
-                        }
-                        None => {
-                            prev.borrow_mut().next = None;
-                            self.tail = Some(prev.clone());
-                        }
-                    },
-                    None => match &cur.next {
-                        Some(next) => {
-                            next.borrow_mut().prev = None;
-                            self.head = Some(next.clone());
-                        }
-                        None => {
-                            self.head = None;
-                            self.tail = None;
-                        }
-                    },
-                }
+                cur_prev.map_or_else(
+                    | | self.head = cur.next.clone(),
+                    |x| x.borrow_mut().next = cur.next.clone()
+                );
+
+                cur_next.map_or_else(
+                    | | self.tail = cur.prev.clone(),
+                    |x| x.borrow_mut().prev = cur.prev.clone()
+                );
             } else {
-                match &cur.next {
-                    Some(next) => self.delete_internal(next.clone(), value),
+                drop(cur);
+                match cur_next {
+                    Some(next) => self.delete_internal(next, value),
                     None => {}
                 }
             }
