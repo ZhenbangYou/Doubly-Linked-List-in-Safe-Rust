@@ -76,13 +76,13 @@ mod list {
 
             if &cur.item == value {
                 cur_prev.map_or_else(
-                    | | self.head = cur.next.clone(),
-                    |x| x.borrow_mut().next = cur.next.clone()
+                    || self.head = cur.next.clone(),
+                    |x| x.borrow_mut().next = cur.next.clone(),
                 );
 
                 cur_next.map_or_else(
-                    | | self.tail = cur.prev.clone(),
-                    |x| x.borrow_mut().prev = cur.prev.clone()
+                    || self.tail = cur.prev.clone(),
+                    |x| x.borrow_mut().prev = cur.prev.clone(),
                 );
             } else {
                 drop(cur);
@@ -111,6 +111,16 @@ mod list {
                 cur = c.borrow().next.clone();
             }
             res
+        }
+    }
+
+    impl<T: Clone + Eq> Drop for List<T> {
+        fn drop(&mut self) {
+            let mut cur = self.head.clone();
+            while let Some(node) = cur.clone() {
+                node.borrow_mut().prev = None;
+                cur = node.borrow_mut().next.clone();
+            }
         }
     }
 }
