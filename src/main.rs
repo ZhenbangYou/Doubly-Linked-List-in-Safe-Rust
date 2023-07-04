@@ -70,15 +70,12 @@ mod list {
             }
         }
         fn delete_internal(&mut self, node: Rc<RefCell<ListNode<T>>>, value: &T) {
-            let cur = node.borrow();
-            if &cur.item == value {
+            if &node.borrow().item == value {
                 self.delete_node(node.clone());
             } else {
-                match cur.next.clone() {
-                    Some(next) => {
-                        drop(cur);
-                        self.delete_internal(next, value);
-                    }
+                let next = node.borrow().next.clone();
+                match next.clone() {
+                    Some(next) => self.delete_internal(next, value),
                     None => (),
                 }
             }
