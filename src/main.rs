@@ -74,9 +74,8 @@ mod list {
                 self.delete_node(node.clone());
             } else {
                 let next = node.borrow().next.clone();
-                match next {
-                    Some(next) => self.delete_internal(next, value),
-                    None => (),
+                if let Some(next) = next {
+                    self.delete_internal(next, value)
                 }
             }
         }
