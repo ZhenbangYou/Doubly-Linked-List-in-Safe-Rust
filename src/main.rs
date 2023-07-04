@@ -6,7 +6,7 @@ mod test;
 fn main() {}
 
 mod list {
-    use std::{cell::RefCell, rc::Rc};
+    use std::{cell::RefCell, fmt::Debug, rc::Rc};
 
     pub struct ListNode<T: Clone + Eq> {
         item: T,
@@ -84,7 +84,7 @@ mod list {
                 self.delete_internal(n.clone(), value)
             }
         }
-        // node must be in the list!
+        /// *node* must be in the list (*self*)!
         pub fn delete_node(&mut self, node: Rc<RefCell<ListNode<T>>>) {
             let cur = node.borrow();
             match (cur.prev.clone(), cur.next.clone()) {
@@ -105,6 +105,14 @@ mod list {
                     next.borrow_mut().prev = Some(prev);
                 }
             }
+        }
+    }
+
+    impl<T: Clone + Eq + std::fmt::Debug> Debug for List<T> {
+        fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+            f.debug_struct("List")
+                .field("items", &self.to_vec())
+                .finish()
         }
     }
 

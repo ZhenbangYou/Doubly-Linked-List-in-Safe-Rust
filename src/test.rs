@@ -31,7 +31,7 @@ mod tests {
                 let r = rng.gen_range(0..100);
                 println!("insert {r}");
                 ls.insert_front(&r);
-                println!("{:?}", ls.to_vec());
+                println!("{:?}", ls);
                 match map.get_mut(&r) {
                     Some(v) => *v += 1,
                     None => {
@@ -43,7 +43,7 @@ mod tests {
                 println!("delete {r}");
                 match map.get_mut(&r) {
                     Some(v) => {
-                        println!("{:?}", ls.to_vec());
+                        println!("{:?}", ls);
                         *v -= 1;
                         if *v == 0 {
                             map.remove(&r);
