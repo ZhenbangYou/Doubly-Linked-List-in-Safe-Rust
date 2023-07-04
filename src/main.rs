@@ -8,7 +8,7 @@ fn main() {}
 mod list {
     use std::{cell::RefCell, rc::Rc};
 
-    struct ListNode<T: Clone + Eq> {
+    pub struct ListNode<T: Clone + Eq> {
         item: T,
         prev: Option<Rc<RefCell<ListNode<T>>>>,
         next: Option<Rc<RefCell<ListNode<T>>>>,
@@ -71,24 +71,15 @@ mod list {
         }
         fn delete_internal(&mut self, node: Rc<RefCell<ListNode<T>>>, value: &T) {
             let cur = node.borrow();
-            let cur_prev = cur.prev.clone();
-            let cur_next = cur.next.clone();
-
             if &cur.item == value {
-                cur_prev.map_or_else(
-                    || self.head = cur.next.clone(),
-                    |x| x.borrow_mut().next = cur.next.clone(),
-                );
-
-                cur_next.map_or_else(
-                    || self.tail = cur.prev.clone(),
-                    |x| x.borrow_mut().prev = cur.prev.clone(),
-                );
+                self.delete_node(node.clone());
             } else {
-                drop(cur);
-                match cur_next {
-                    Some(next) => self.delete_internal(next, value),
-                    None => {}
+                match cur.next.clone() {
+                    Some(next) => {
+                        drop(cur);
+                        self.delete_internal(next, value);
+                    }
+                    None => (),
                 }
             }
         }
@@ -96,6 +87,28 @@ mod list {
             match &self.head {
                 Some(n) => self.delete_internal(n.clone(), value),
                 None => {}
+            }
+        }
+        // node must be in the list!
+        pub fn delete_node(&mut self, node: Rc<RefCell<ListNode<T>>>) {
+            let cur = node.borrow();
+            match (cur.prev.clone(), cur.next.clone()) {
+                (None, None) => {
+                    self.head = None;
+                    self.tail = None;
+                }
+                (None, Some(next)) => {
+                    self.head = Some(next.clone());
+                    next.borrow_mut().prev = None;
+                }
+                (Some(prev), None) => {
+                    self.tail = Some(prev.clone());
+                    prev.borrow_mut().next = None;
+                }
+                (Some(prev), Some(next)) => {
+                    prev.borrow_mut().next = Some(next.clone());
+                    next.borrow_mut().prev = Some(prev);
+                }
             }
         }
     }
