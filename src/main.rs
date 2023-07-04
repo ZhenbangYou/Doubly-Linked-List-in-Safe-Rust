@@ -80,9 +80,8 @@ mod list {
             }
         }
         pub fn delete(&mut self, value: &T) {
-            match &self.head {
-                Some(n) => self.delete_internal(n.clone(), value),
-                None => (),
+            if let Some(n) = &self.head {
+                self.delete_internal(n.clone(), value)
             }
         }
         // node must be in the list!
