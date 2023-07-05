@@ -73,19 +73,19 @@ mod list {
                 }
             }
         }
-        fn delete_internal(&mut self, node: Rc<RefCell<ListNode<T>>>, value: &T) {
+        fn delete_internal(&mut self, node: &Rc<RefCell<ListNode<T>>>, value: &T) {
             if &node.borrow().item == value {
                 self.delete_node(node.clone());
             } else {
                 let next = node.borrow().next.clone();
-                if let Some(next) = next {
+                if let Some(ref next) = next {
                     self.delete_internal(next, value)
                 }
             }
         }
         pub fn delete(&mut self, value: &T) {
             if let Some(ref n) = &self.head {
-                self.delete_internal(n.clone(), value)
+                self.delete_internal(&(n.clone()), value)
             }
         }
         /// *node* must be in the list (*self*)!
