@@ -6,11 +6,15 @@ mod test;
 fn main() {}
 
 mod list {
-    use std::{cell::RefCell, fmt::Debug, rc::Rc};
+    use std::{
+        cell::RefCell,
+        fmt::Debug,
+        rc::{Rc, Weak},
+    };
 
     pub struct ListNode<T: Clone + Eq> {
         item: T,
-        prev: Option<Rc<RefCell<ListNode<T>>>>,
+        prev: Option<Weak<RefCell<ListNode<T>>>>,
         next: Option<Rc<RefCell<ListNode<T>>>>,
     }
 
@@ -60,7 +64,7 @@ mod list {
                 Some(old_head) => {
                     let node = node.clone();
                     node.borrow_mut().next = Some(old_head.clone());
-                    (*old_head).borrow_mut().prev = Some(node.clone());
+                    (*old_head).borrow_mut().prev = Some(Rc::downgrade(&node.clone()));
                     self.head = Some(node);
                 }
                 None => {
@@ -97,12 +101,14 @@ mod list {
                     next.borrow_mut().prev = None;
                 }
                 (Some(prev), None) => {
+                    let prev = prev.clone().upgrade().unwrap();
                     self.tail = Some(prev.clone());
                     prev.borrow_mut().next = None;
                 }
                 (Some(prev), Some(next)) => {
+                    let prev = prev.clone().upgrade().unwrap();
                     prev.borrow_mut().next = Some(next.clone());
-                    next.borrow_mut().prev = Some(prev);
+                    next.borrow_mut().prev = Some(Rc::downgrade(&prev));
                 }
             }
         }
@@ -127,16 +133,6 @@ mod list {
                 cur = c.borrow().next.clone();
             }
             res
-        }
-    }
-
-    impl<T: Clone + Eq> Drop for List<T> {
-        fn drop(&mut self) {
-            let mut cur = self.head.clone();
-            while let Some(node) = cur.clone() {
-                node.borrow_mut().prev = None;
-                cur = node.borrow_mut().next.clone();
-            }
         }
     }
 }
