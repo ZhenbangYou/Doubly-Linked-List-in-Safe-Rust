@@ -101,12 +101,12 @@ mod list {
                     next.borrow_mut().prev = None;
                 }
                 (Some(prev), None) => {
-                    let prev = prev.clone().upgrade().unwrap();
+                    let prev = prev.upgrade().unwrap();
                     self.tail = Some(prev.clone());
                     prev.borrow_mut().next = None;
                 }
                 (Some(prev), Some(next)) => {
-                    let prev = prev.clone().upgrade().unwrap();
+                    let prev = prev.upgrade().unwrap();
                     prev.borrow_mut().next = Some(next.clone());
                     next.borrow_mut().prev = Some(Rc::downgrade(&prev));
                 }
