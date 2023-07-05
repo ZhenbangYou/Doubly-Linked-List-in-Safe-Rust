@@ -47,21 +47,21 @@ mod list {
                 true
             } else {
                 match &cur.next {
-                    Some(next) => self.find_internal(next.clone(), value),
+                    Some(ref next) => self.find_internal(next.clone(), value),
                     None => false,
                 }
             }
         }
         pub fn find(&self, value: &T) -> bool {
             match &self.head {
-                Some(n) => self.find_internal(n.clone(), value),
+                Some(ref next) => self.find_internal(next.clone(), value),
                 None => false,
             }
         }
         pub fn insert_front(&mut self, val: &T) {
             let node = Rc::new(RefCell::new(ListNode::new(val)));
             match &self.head {
-                Some(old_head) => {
+                Some(ref old_head) => {
                     let node = node.clone();
                     node.borrow_mut().next = Some(old_head.clone());
                     (*old_head).borrow_mut().prev = Some(Rc::downgrade(&node.clone()));
@@ -84,7 +84,7 @@ mod list {
             }
         }
         pub fn delete(&mut self, value: &T) {
-            if let Some(n) = &self.head {
+            if let Some(ref n) = &self.head {
                 self.delete_internal(n.clone(), value)
             }
         }
@@ -96,16 +96,16 @@ mod list {
                     self.head = None;
                     self.tail = None;
                 }
-                (None, Some(next)) => {
+                (None, Some(ref next)) => {
                     self.head = Some(next.clone());
                     next.borrow_mut().prev = None;
                 }
-                (Some(prev), None) => {
+                (Some(ref prev), None) => {
                     let prev = prev.upgrade().unwrap();
                     self.tail = Some(prev.clone());
                     prev.borrow_mut().next = None;
                 }
-                (Some(prev), Some(next)) => {
+                (Some(ref prev), Some(ref next)) => {
                     let prev = prev.upgrade().unwrap();
                     prev.borrow_mut().next = Some(next.clone());
                     next.borrow_mut().prev = Some(Rc::downgrade(&prev));
@@ -126,7 +126,7 @@ mod list {
         pub fn to_vec(&self) -> Vec<T> {
             let mut res = vec![];
             let mut cur = self.head.clone();
-            while let Some(c) = cur.clone() {
+            while let Some(ref c) = cur.clone() {
                 let c = c.clone();
                 let val = c.borrow().item.clone();
                 res.push(val);
