@@ -71,4 +71,57 @@ mod tests {
 
         assert_eq!(l.to_vec(), vec![2, 1]);
     }
+
+    #[test]
+    fn test_multithreads() {
+        use std::collections::HashMap;
+        use std::sync::{Arc, Mutex};
+        use std::thread;
+
+        let ls = Arc::new(Mutex::new(List::new()));
+        let map = Arc::new(Mutex::new(HashMap::new()));
+
+        thread::scope(|s| {
+            for _ in 0..8 {
+                s.spawn(|| {
+                    let mut rng = rand::thread_rng();
+                    for _ in 0..100 {
+                        let mut ls = ls.lock().unwrap();
+                        let mut map = map.lock().unwrap();
+                        let is_insert = rng.gen_bool(0.5);
+
+                        if is_insert {
+                            let r = rng.gen_range(0..100);
+                            println!("insert {r}");
+                            ls.insert_front(&r);
+                            println!("{:?}", ls);
+                            match map.get_mut(&r) {
+                                Some(v) => *v += 1,
+                                None => {
+                                    let _ = map.insert(r, 1);
+                                }
+                            }
+                        } else {
+                            let r = rng.gen_range(0..100);
+                            println!("delete {r}");
+                            match map.get_mut(&r) {
+                                Some(v) => {
+                                    println!("{:?}", ls);
+                                    *v -= 1;
+                                    if *v == 0 {
+                                        map.remove(&r);
+                                    }
+                                    assert_eq!(ls.find(&r), true);
+                                    ls.delete(&r);
+                                }
+                                None => {
+                                    assert_eq!(ls.find(&r), false);
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+        });
+    }
 }

@@ -7,15 +7,14 @@ fn main() {}
 
 mod list {
     use std::{
-        cell::RefCell,
         fmt::Debug,
-        rc::{Rc, Weak},
+        sync::{Arc, Mutex, Weak},
     };
 
     pub struct ListNode<T: Clone + Eq> {
         item: T,
-        prev: Option<Weak<RefCell<ListNode<T>>>>,
-        next: Option<Rc<RefCell<ListNode<T>>>>,
+        prev: Option<Weak<Mutex<ListNode<T>>>>,
+        next: Option<Arc<Mutex<ListNode<T>>>>,
     }
 
     impl<T: Clone + Eq> ListNode<T> {
@@ -29,8 +28,8 @@ mod list {
     }
 
     pub struct List<T: Clone + Eq> {
-        head: Option<Rc<RefCell<ListNode<T>>>>,
-        tail: Option<Rc<RefCell<ListNode<T>>>>,
+        head: Option<Arc<Mutex<ListNode<T>>>>,
+        tail: Option<Arc<Mutex<ListNode<T>>>>,
     }
 
     impl<T: Clone + Eq + std::fmt::Display> List<T> {
@@ -40,9 +39,9 @@ mod list {
                 tail: None,
             }
         }
-        fn find_internal(&self, node: Rc<RefCell<ListNode<T>>>, value: &T) -> bool {
+        fn find_internal(&self, node: Arc<Mutex<ListNode<T>>>, value: &T) -> bool {
             let node = node.clone();
-            let cur = (*node).borrow();
+            let cur = (*node).lock().unwrap();
             if &cur.item == value {
                 true
             } else {
@@ -59,12 +58,12 @@ mod list {
             }
         }
         pub fn insert_front(&mut self, val: &T) {
-            let node = Rc::new(RefCell::new(ListNode::new(val)));
+            let node: Arc<Mutex<ListNode<T>>> = Arc::new(Mutex::new(ListNode::new(val)));
             match &self.head {
                 Some(ref old_head) => {
                     let node = node.clone();
-                    node.borrow_mut().next = Some(old_head.clone());
-                    (*old_head).borrow_mut().prev = Some(Rc::downgrade(&node.clone()));
+                    node.lock().unwrap().next = Some(old_head.clone());
+                    (*old_head).lock().unwrap().prev = Some(Arc::downgrade(&node.clone()));
                     self.head = Some(node);
                 }
                 None => {
@@ -73,11 +72,11 @@ mod list {
                 }
             }
         }
-        fn delete_internal(&mut self, node: &Rc<RefCell<ListNode<T>>>, value: &T) {
-            if &node.borrow().item == value {
+        fn delete_internal(&mut self, node: &Arc<Mutex<ListNode<T>>>, value: &T) {
+            if &node.lock().unwrap().item == value {
                 self.delete_node(node.clone());
             } else {
-                let next = node.borrow().next.clone();
+                let next = node.lock().unwrap().next.clone();
                 if let Some(ref next) = next {
                     self.delete_internal(next, value)
                 }
@@ -89,8 +88,8 @@ mod list {
             }
         }
         /// *node* must be in the list (*self*)!
-        pub fn delete_node(&mut self, node: Rc<RefCell<ListNode<T>>>) {
-            let cur = node.borrow();
+        pub fn delete_node(&mut self, node: Arc<Mutex<ListNode<T>>>) {
+            let cur = node.lock().unwrap();
             match (cur.prev.clone(), cur.next.clone()) {
                 (None, None) => {
                     self.head = None;
@@ -98,17 +97,17 @@ mod list {
                 }
                 (None, Some(ref next)) => {
                     self.head = Some(next.clone());
-                    next.borrow_mut().prev = None;
+                    next.lock().unwrap().prev = None;
                 }
                 (Some(ref prev), None) => {
                     let prev = prev.upgrade().unwrap();
                     self.tail = Some(prev.clone());
-                    prev.borrow_mut().next = None;
+                    prev.lock().unwrap().next = None;
                 }
                 (Some(ref prev), Some(ref next)) => {
                     let prev = prev.upgrade().unwrap();
-                    prev.borrow_mut().next = Some(next.clone());
-                    next.borrow_mut().prev = Some(Rc::downgrade(&prev));
+                    prev.lock().unwrap().next = Some(next.clone());
+                    next.lock().unwrap().prev = Some(Arc::downgrade(&prev));
                 }
             }
         }
@@ -128,9 +127,9 @@ mod list {
             let mut cur = self.head.clone();
             while let Some(ref c) = cur.clone() {
                 let c = c.clone();
-                let val = c.borrow().item.clone();
+                let val = c.lock().unwrap().item.clone();
                 res.push(val);
-                cur = c.borrow().next.clone();
+                cur = c.lock().unwrap().next.clone();
             }
             res
         }
